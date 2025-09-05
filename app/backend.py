@@ -25,6 +25,33 @@ class Backend:
     def accept_connections(self):
         while True:
             conn, addr = self.SERVER.accept()                               # gets connection and address from client
+
+            handle_thread = threading.Thread(target=self.handle_client, args=(conn, addr), daemon=True)     # creates a daemon thread to run client handling
+            handle_thread.start()                                                                           # starts thread
+
+            
+    def handle_client(self, conn, addr):
+        print(f"{addr} Joined!")                                                                            # prints user joined
+        self.clients.append(conn)                                                                           # appends user connection to client list
+
+        try:                                                                                                    
+            while True:                                                                                     # loop to buffer data
+                data = conn.recv(16)                                                                      # receive data
+                if not data:                                                                                
+                    break                                           
+                print(f"[SERVER] {data}")                                                           
+
+                for client in self.clients:
+                    if client != conn:
+                        client.sendall(f"[SERVER] {data.encode()}")
+        except ConnectionResetError:
+            pass
+        finally:
+            try:
+                self.clients.remove(conn)
+            except ValueError:
+                pass
+        conn.close()
             
 
     # main function for host
@@ -36,6 +63,8 @@ class Backend:
                 break
             else:
                 print("Unknown Command")
+
+
 
     
 
