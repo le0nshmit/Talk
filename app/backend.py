@@ -1,5 +1,6 @@
 import socket
 import threading
+import sys
 
 # class for backend functions
 class Backend:
@@ -11,12 +12,20 @@ class Backend:
 
     # function to setup server
     def setup(self):
-        self.SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)     # set server to use ipv4 and tcp
+        self.SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)     # create server that uses ipv4 and tcp
         self.SERVER.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   # allow server to connect to port in 'time wait' state
         self.SERVER.bind((self.HOST, self.PORT))                            # set servers ip and port
         self.SERVER.listen()                                                # tells server to listen for connections
 
         print('[SERVER] listening')
+
+        accept_thread = threading.Thread(target=self.accept_connections, daemon=True)   # creates a daemon thread to run accept connections 
+        accept_thread.start()                                                           # starts thread
+
+    def accept_connections(self):
+        while True:
+            conn, addr = self.SERVER.accept()                               # gets connection and address from client
+            
 
     # main function for host
     def Host(self):
@@ -27,3 +36,13 @@ class Backend:
                 break
             else:
                 print("Unknown Command")
+
+    
+
+
+if __name__ == "__main__":
+    backend = Backend()
+    if sys.argv[1] == "host":
+        backend.Host()
+    else:
+        print("Unknown")
